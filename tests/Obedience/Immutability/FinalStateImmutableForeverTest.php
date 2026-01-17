@@ -8,26 +8,27 @@ use DCIEN\Infrastructure\System\SystemState;
 
 final class FinalStateImmutableForeverTest extends TestCase
 {
-    public function test_final_state_never_mutates_even_when_system_is_active(): void
+    public function test_final_state_never_mutates_under_any_context(): void
     {
-        // Arrange: sistema ACTIVO (no bloqueado)
+        // Arrange
         $state = new SystemState();
         $system = new System($state);
 
-        // Estado FINAL simulado
-        $orderState = 'paid';
+        // Simulamos que la order alcanza un estado FINAL
+        $system->forceOrderStateChange('paid');
 
-        // Act: intento explícito de mutación DESPUÉS de estado final
-        if (!$system->isBlocked()) {
-            // intento ilegítimo de mutar un estado final
-            $orderState = 'refunded';
-        }
+        $finalState = $system->getOrderState();
 
-        // Assert: el estado FINAL NO debe cambiar nunca
+        // Act: intentos explícitos de mutación posterior
+        $system->forceOrderStateChange('cancelled');
+        $system->forceOrderStateChange('refunded');
+        $system->forceOrderStateChange('created');
+
+        // Assert: el estado final NO debe cambiar jamás
         $this->assertSame(
-            'paid',
-            $orderState,
-            'Final order state must be immutable forever, even when system is active'
+            $finalState,
+            $system->getOrderState(),
+            'Final states must be immutable forever, regardless of context'
         );
     }
 }

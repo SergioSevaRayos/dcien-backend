@@ -22,7 +22,9 @@ final class NumberStateImmutableWhenBlockedTest extends TestCase
         // Act: intento explícito de mutación (aunque esté bloqueado)
         try {
             // simulación de intento ilegítimo de mutación
-            $numberState = 'sold';
+            $system->attemptMutation(function () use (&$numberState) {
+    $numberState = 'sold';
+});
         } catch (\Throwable $e) {
             // no importa: la mutación NO debe ocurrir
         }

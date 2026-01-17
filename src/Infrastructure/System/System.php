@@ -28,10 +28,24 @@ final class System
 
     public function forceOrderStateChange(string $newState): void
     {
-        // Mutación explícita.
-        // Los tests decidirán si esto es aceptable o no.
+        // 🚫 Bloqueo global: ninguna mutación permitida
+        if ($this->state->isBlocked()) {
+            return;
+        }
+
+        // Estados finales cerrados
+        $finalStates = ['paid', 'cancelled'];
+
+        if (in_array($this->orderState, $finalStates, true)) {
+            return;
+        }
+
         $this->orderState = $newState;
     }
+
+
+
+
 
     public function getOrderState(): string
     {

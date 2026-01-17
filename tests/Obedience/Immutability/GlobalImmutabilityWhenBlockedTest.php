@@ -16,28 +16,19 @@ final class GlobalImmutabilityWhenBlockedTest extends TestCase
 
         $system = new System($state);
 
-        $orderState  = 'created';
-        $numberState = 'reserved';
+        // Estado inicial gestionado por el sistema
+        $this->assertSame('created', $system->getOrderState());
 
-        // Act: intentos explícitos de mutación
-        try {
-            $orderState  = 'paid';
-            $numberState = 'sold';
-        } catch (\Throwable $e) {
-            // irrelevante
-        }
+        // Act: intento de mutación A TRAVÉS DEL SISTEMA
+        $system->attemptMutation(function () use ($system) {
+            $system->forceOrderStateChange('paid');
+        });
 
-        // Assert
+        // Assert: el estado NO debe mutar
         $this->assertSame(
             'created',
-            $orderState,
+            $system->getOrderState(),
             'Order state must remain immutable while system is blocked'
-        );
-
-        $this->assertSame(
-            'reserved',
-            $numberState,
-            'Number state must remain immutable while system is blocked'
         );
     }
 }

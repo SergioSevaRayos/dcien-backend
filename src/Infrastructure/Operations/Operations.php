@@ -9,7 +9,8 @@ final class Operations
 {
     public function __construct(
         private System $system
-    ) {}
+    ) {
+    }
 
     public function createOrder(): bool
     {
