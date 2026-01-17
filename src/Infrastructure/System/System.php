@@ -3,13 +3,14 @@ declare(strict_types=1);
 
 namespace DCIEN\Infrastructure\System;
 
+use DCIEN\Infrastructure\System\Sovereign;
+
 final class System
 {
     // =========================
     // === TEST-ONLY STATE =====
     // =========================
 
-    // Estado interno simulado de order (solo para tests de inmutabilidad)
     private string $orderState = 'created';
 
     /** @var string[] */
@@ -17,9 +18,12 @@ final class System
 
     private bool $alertConfirmed = false;
 
+    private Sovereign $sovereign;
+
     public function __construct(
         private SystemState $state
     ) {
+        $this->sovereign = new Sovereign();
     }
 
     // =========================
@@ -28,24 +32,24 @@ final class System
 
     public function forceOrderStateChange(string $newState): void
     {
-        // 🚫 Bloqueo global: ninguna mutación permitida
+        // 🚫 bloqueo total
         if ($this->state->isBlocked()) {
             return;
         }
 
-        // Estados finales cerrados
+        // 🚫 estados finales inmutables
         $finalStates = ['paid', 'cancelled'];
-
         if (in_array($this->orderState, $finalStates, true)) {
+            return;
+        }
+
+        // 🚫 sin permiso soberano
+        if (!$this->sovereign->allowsMutation()) {
             return;
         }
 
         $this->orderState = $newState;
     }
-
-
-
-
 
     public function getOrderState(): string
     {
@@ -53,7 +57,7 @@ final class System
     }
 
     // =========================
-    // === SYSTEM STATE =========
+    // === SYSTEM STATE ========
     // =========================
 
     public function isBlocked(): bool
@@ -72,18 +76,15 @@ final class System
     }
 
     // =========================
-    // === ALERTING CONTRACT ===
+    // === ALERTING ============
     // =========================
 
     public function simulateSystemicCorruption(string $code): void
     {
-        // evento detectado
         $this->alertTrail[] = 'event';
 
-        // bloqueo inmediato
         $this->state->block($code);
 
-        // alerta humana emitida
         $this->alertTrail[] = 'alert';
     }
 
@@ -102,9 +103,17 @@ final class System
         return $this->alertTrail;
     }
 
+    // =========================
+    // === SOVEREIGN GATE ======
+    // =========================
+
     public function attemptMutation(callable $mutation): bool
     {
         if ($this->state->isBlocked()) {
+            return false;
+        }
+
+        if (!$this->sovereign->allowsMutation()) {
             return false;
         }
 
@@ -112,4 +121,15 @@ final class System
         return true;
     }
 
+    // === test-only explicit authority ===
+
+    public function grantSovereignPermission(): void
+    {
+        $this->sovereign->grant();
+    }
+
+    public function revokeSovereignPermission(): void
+    {
+        $this->sovereign->revoke();
+    }
 }

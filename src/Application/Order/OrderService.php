@@ -9,7 +9,15 @@ final class OrderService
 {
     public function __construct(
         private System $system
-    ) {}
+    ) {
+    }
+    public function forceOrderToPaid(): bool
+    {
+        return $this->system->attemptMutation(function () {
+            $this->system->forceOrderStateChange('paid');
+        });
+    }
+
 
     public function createOrder(): bool
     {
